@@ -1,5 +1,3 @@
-import javax.activation.DataSource;
-
 import org.postgresql.ds.PGSimpleDataSource;
 
 public class Database {

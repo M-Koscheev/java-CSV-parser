@@ -9,12 +9,9 @@ public class DataHandilng {
         Statement statement = conn.createStatement();
 
         for (String[] line: lines) {
-            for (int i = 0; i < line.length; i++) {
-                line[i] = line[i].trim();
-            }
-
             String country = line[4];
-            statement.executeUpdate("INSERT INTO \"Countries\"(title) VALUES ('" + country + "') ON CONFLICT DO NOTHING RETURNING id", Statement.RETURN_GENERATED_KEYS);
+            statement.executeUpdate("INSERT INTO \"Countries\"(title) VALUES ('" + country + "') ON CONFLICT(title)" +
+                        " DO UPDATE SET title=EXCLUDED.title RETURNING id", Statement.RETURN_GENERATED_KEYS);
             ResultSet res = statement.getGeneratedKeys();
             res.next();
             java.util.UUID country_id = res.getObject("id", java.util.UUID.class);
@@ -23,7 +20,8 @@ public class DataHandilng {
                 line[1] = line[1].substring(1, line[1].length() - 1);
             }
             statement.executeUpdate("INSERT INTO \"People\"(rank, name, networth, age, country_id) VALUES (" + 
-                line[0] + ",$$" + line[1] + "$$," + line[2] + "," + line[3] + ",'" + country_id + "') RETURNING id", Statement.RETURN_GENERATED_KEYS);
+                line[0] + ",$$" + line[1] + "$$," + line[2] + "," + line[3] + ",'" + country_id + "') ON CONFLICT(name)" +
+                " DO UPDATE SET name=EXCLUDED.name RETURNING id", Statement.RETURN_GENERATED_KEYS);
             res = statement.getGeneratedKeys();
             res.next();
             java.util.UUID person_id = res.getObject("id", java.util.UUID.class);
@@ -34,7 +32,8 @@ public class DataHandilng {
             }
             String[] sources = line[5].split(", ");
             for (String source: sources) {
-                statement.executeUpdate("INSERT INTO \"Sources\"(title) VALUES ($$" + source + "$$) ON CONFLICT DO NOTHING RETURNING id", Statement.RETURN_GENERATED_KEYS);
+                statement.executeUpdate("INSERT INTO \"Sources\"(title) VALUES ($$" + source + "$$) ON CONFLICT(title)" + 
+                    " DO UPDATE SET title=EXCLUDED.title RETURNING id", Statement.RETURN_GENERATED_KEYS);
                 res = statement.getGeneratedKeys();
                 res.next();
                 java.util.UUID source_id = res.getObject("id", java.util.UUID.class);
@@ -47,12 +46,14 @@ public class DataHandilng {
             }
             String[] industries = line[6].split(", ");
             for (String industry: industries) {
-                statement.executeUpdate("INSERT INTO \"Industries\"(title) VALUES ($$" + industry + "$$) ON CONFLICT DO NOTHING RETURNING id", Statement.RETURN_GENERATED_KEYS);
+                statement.executeUpdate("INSERT INTO \"Industries\"(title) VALUES ($$" + industry + "$$) ON CONFLICT(title)" +
+                    " DO UPDATE SET title=EXCLUDED.title RETURNING id", Statement.RETURN_GENERATED_KEYS);
                 res = statement.getGeneratedKeys();
                 res.next();
                 java.util.UUID industry_id = res.getObject("id", java.util.UUID.class);
                 statement.executeUpdate("INSERT INTO \"Industry_Person\"(person_id, industry_id) VALUES ('" + person_id + "','" + industry_id + "') ON CONFLICT DO NOTHING");
             }
         }
+        statement.close();
     }
 }
